@@ -310,24 +310,5 @@
       "<rootDir>/internals/testing/test-bundler.js"
     ]
   },
-  "contributors": [],
-  "transitive": {
-    "name": "tree-operations",
-    "scope": "yeutech-lab",
-    "scopedName": "@yeutech-lab/tree-operations",
-    "jsnext:main": "dist/@yeutech-lab/tree-operations.esm.js",
-    "module": "dist/@yeutech-lab/tree-operations.esm.js",
-    "homepage": "https://yeutech-lab.github.io/tree-operations",
-    "repository": {
-      "type": "git",
-      "url": "https://github.com/yeutech-lab/tree-operations.git"
-    },
-    "bugs": {
-      "url": "https://github.com/yeutech-lab/tree-operations/issues"
-    },
-    "publishConfig": {
-      "access": "public",
-      "registry": "https://registry.npmjs.org"
-    }
-  }
+  "contributors": []
 }
