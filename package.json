@@ -1,6 +1,6 @@
 {
   "name": "@yeutech-lab/tree-operations",
-  "version": "1.0.0",
+  "version": "0.0.0-development",
   "description": "Utilities for tree operations",
   "main": "lib/index.js",
   "jsnext:main": "dist/@yeutech-lab/tree-operations.esm.js",
