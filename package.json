@@ -1,6 +1,6 @@
 {
   "name": "@yeutech/tree-operations",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "Utilities for tree operations",
   "main": "lib/index.js",
   "jsnext:main": "dist/@yeutech/tree-operations.esm.js",
@@ -38,7 +38,8 @@
     "prestyleguide": "npm run jsdoc",
     "styleguide": "styleguidist server",
     "prestyleguide:build": "npm run jsdoc",
-    "styleguide:build": "styleguidist build"
+    "styleguide:build": "styleguidist build",
+    "postinstall": "node -e \"console.log('\\u001b[31m@yeutech/tree-operations is deprecated, use @yeutech-lab/tree-operations instead.')\" || exit 0"
   },
   "repository": {
     "type": "git",
