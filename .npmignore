@@ -32,3 +32,4 @@ rollup.config.js
 /*.tgz
 /lib/**/*.md
 /internals
+/lib/tests
