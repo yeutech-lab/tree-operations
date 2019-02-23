@@ -1,0 +1,9 @@
+{
+  "rollup-umd:init": {
+    "scope": "@kopaxgroup-api",
+    "domain": "kopaxgroup.com",
+    "company-fullname": "Kopax Limited",
+    "contact-email": "contact@kopaxgroup.com",
+    "readme-rollup-signature": ""
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "rollup-umd:init": {
+    "scope": "@yeutech",
+    "domain": "yeutech",
+    "company-fullname": "Yeutech Company Limited",
+    "contact-email": "contact@yeutech.vn",
+    "readme-rollup-signature": "love in Vietnam with "
+  }
+}

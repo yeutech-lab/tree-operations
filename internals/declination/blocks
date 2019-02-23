@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -e
+if [[ -n "$DEBUG" ]]; then
+ set -x
+fi
+
+declare -A block0=(
+    [from]=01
+    [to]=21
+)
+
+declare -A block1=(
+    [from]=22
+    [to]=27
+    [company]='yeutech'
+)
+
+declare -A block2=(
+    [from]=28
+    [to]=29
+    [company]='kopaxgroup-api'
+)
+
+declare -n block

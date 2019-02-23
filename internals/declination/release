@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+path="$(dirname "$0")"
+set -e
+if [[ -n "$DEBUG" ]]; then
+ set -x
+fi
+
+. <(npx @yeutech-lab/rollup-umd-ci-keys print keys.sh)
+
+if [[ ${CI_PROJECT_URL} =~ ^https?://[^/]+(:[0-9]+)? ]]; then
+  gitUrl="$BASH_REMATCH"
+fi
+
+RELEASE_VERSION=${1}
+PARALLEL_PIPELINE_LIMIT=${PARALLEL_PIPELINE_LIMIT:-4}
+
+if [ -z "${RELEASE_VERSION}" ] && [ -f "~/release_version" ]; then
+  RELEASE_VERSION=$(cat ~/release_version)
+fi
+if [ -z "${RELEASE_VERSION}" ]; then
+  echo "Declination can only be triggered from release"
+  exit 1
+fi
+
+ref=v${RELEASE_VERSION#v}
+
+function get_running_pipeline_count() {
+  status=running; curl -sS -H "PRIVATE-TOKEN: ${GL_TOKEN:-$GITLAB_TOKEN}" "${gitUrl}/api/v4/projects/${CI_PROJECT_ID}/pipelines" | jq --arg REF "$ref" --arg STATUS "$status" -r '[.[] | select(.status==$STATUS) | select(.ref | startswith($REF))] | length'
+}
+
+function run_pipeline() {
+  from=$1
+  to=$2
+  company=${3:-"yeutech"}
+  curl -sS -X POST \
+    -F "token=${TRIGGER_DECLINATION}" \
+    -F "ref=${ref}" \
+    -F "variables[GL_TOKEN]=${GL_TOKEN}" \
+    -F "variables[DECLINATION_RELEASE_REF_NAME]=${ref}" \
+    -F "variables[DECLINATION_FROM]=${from}" \
+    -F "variables[DECLINATION_TO]=${to}" \
+    -F "variables[DECLINATION_COMPANY]=${company}" \
+    "${gitUrl}/api/v4/projects/${CI_PROJECT_ID}/trigger/pipeline"
+}
+
+function wait_for_available_pipeline() {
+  while [[ $(get_running_pipeline_count) -gt ${PARALLEL_PIPELINE_LIMIT} ]]
+  do
+    printf "\nParallel pipeline limit is ${PARALLEL_PIPELINE_LIMIT}, waiting for running pipelines to finish"
+    sleep 15
+  done
+}
+function declination () {
+  . ${path}/blocks
+  for block in ${!block@}; do
+      wait_for_available_pipeline
+      run_pipeline ${block[from]} ${block[to]} ${block[company]}
+      sleep 10
+  done
+}
+
+declination

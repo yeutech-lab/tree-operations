@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -e
+if [[ -n "$DEBUG" ]]; then
+ set -x
+fi
+
+
+# merge package.json
+MYDIR="$(dirname "$(which "$0")")"
+jq -s '.[0] * .[1]' package.json $MYDIR/package.json > package.json$$
+mv package.json$$ package.json
+
+npm uninstall --save-dev @yeutech-lab/documentation
+npm install --save-dev @kopaxgroup/documentation

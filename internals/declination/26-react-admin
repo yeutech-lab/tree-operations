@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -e
+git_checkout ${PACKAGE_VERSION}-bs-redux-saga-router-dom-intl
+# start
+remove_rollup
+
+RA_VERSION=2.6.4
+REDUX_VERSION=3.7.2
+REACT_REDUX_VERSION=5.0.7
+RECOMPOSE_VERSION=0.26.0
+REACT_ROUTER_DOM_VERSION=4.2.2
+LODASH_VERSION=4.17.11
+REDUX_FORM_VERSION=7.4.0
+REDUX_SAGA_VERSION=0.16.0
+INFLECTION_VERSION=1.12.0
+REACT_ROUTER_REDUX_VERSION=5.0.0-alpha.9
+REACT_ROUTER_VERSION=4.2.0
+QUERY_STRING_VERSION=5.1.1
+
+npx @yeutech/rollup-umd-scripts peer add "ra-core@${RA_VERSION}*RaCore" --singleton
+npx @yeutech/rollup-umd-scripts peer add "ra-ui-materialui@${RA_VERSION}*RaUiMui" --singleton
+npx @yeutech/rollup-umd-scripts peer add "redux@${REDUX_VERSION}*Redux" --singleton
+npx @yeutech/rollup-umd-scripts peer add "react-redux@${REACT_REDUX_VERSION}*ReactRedux" --singleton
+npx @yeutech/rollup-umd-scripts peer add "recompose@${RECOMPOSE_VERSION}*recompose" --singleton
+npx @yeutech/rollup-umd-scripts peer add "react-router-dom@${REACT_ROUTER_DOM_VERSION}*ReactRouterDom" --singleton
+npx @yeutech/rollup-umd-scripts peer add "lodash@${LODASH_VERSION}*_"--singleton
+npx @yeutech/rollup-umd-scripts peer add redux-form@${REDUX_FORM_VERSION}*ReduxForm --singleton
+npx @yeutech/rollup-umd-scripts peer add redux-saga@${REDUX_SAGA_VERSION}*ReduxSaga --singleton
+npx @yeutech/rollup-umd-scripts peer add inflection@${INFLECTION_VERSION}*Inflection --singleton
+npx @yeutech/rollup-umd-scripts peer add react-router-redux@${REACT_ROUTER_REDUX_VERSION}*ReactRouterRedux --singleton
+npx @yeutech/rollup-umd-scripts peer add react-router@${REACT_ROUTER_VERSION}*ReactRouter --singleton
+npx @yeutech/rollup-umd-scripts peer add query-string@${QUERY_STRING_VERSION} --singleton

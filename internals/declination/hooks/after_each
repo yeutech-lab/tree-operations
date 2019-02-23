@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+set -e
+if [[ -n "$DEBUG" ]]; then
+ set -x
+fi
+
+
+# this will remove the declination hook within the package.json
+jq '.release.publish |= map(select((type == "object" and (.cmd//""|contains("declination/release")))|not))' package.json > package.tmp.json$$
+mv package.tmp.json$$ package.json
+
+
+# remove the internals/declination
+[[ -d internals/declination ]] && rm -rf internals/declination

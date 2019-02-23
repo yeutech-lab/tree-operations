@@ -1,0 +1,243 @@
+#!/usr/bin/env bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+set -e
+if [[ -n "$DEBUG" ]]; then
+ set -x
+fi
+
+path="$(dirname "$0")"
+
+from=${1:-${DECLINATION_FROM:-"01"}}
+to=${2:-${DECLINATION_TO:-${from}}}
+export PACKAGE_VERSION=v${DECLINATION_RELEASE_REF_NAME#v}
+
+function is_release() {
+  [[ -n "$CI" ]] && [[ "$CI_COMMIT_REF_NAME" = ${DECLINATION_RELEASE_REF_NAME} ]] && return 0;
+  return 1;
+}
+
+export -f is_release
+
+function updateLocalDependencies() {
+  npm uninstall --save-dev @rollup-umd/documentation @rollup-umd/rollup
+  npm install --save-dev @rollup-umd/documentation @rollup-umd/rollup
+}
+
+is_release && echo "\n=========== RELEASE ============"
+is_release && echo "\nPACKAGE_VERSION=$PACKAGE_VERSION"
+is_release && . <(npx @yeutech-lab/rollup-umd-ci-keys print keys.sh)
+private_token=${GL_TOKEN:-${GITLAB_TOKEN:-${CI_JOB_TOKEN}}}
+rollup_git_url="${CI_PROJECT_URL/:\/\//://gitlab-ci-token:${private_token}@}.git"
+declination_company=${DECLINATION_COMPANY:-"yeutech"}
+export DECLINATION_YEAR=${DECLINATION_YEAR:-$(date +%Y)}
+is_release && echo "\n=========== RELEASE ============"
+
+# set perms
+find ${path} -type d -exec chmod +x {} \;
+
+is_release && updateLocalDependencies
+
+## Use temporary dir for all declinations
+pathDeclination=/tmp/$$/declination
+rm -rf ${pathDeclination}
+mkdir -p /tmp/$$
+mv internals/declination ${pathDeclination}
+
+chmod +x ${pathDeclination}/hooks/*
+[[ -f ${pathDeclination}/hooks/config ]] && . ${pathDeclination}/hooks/config || echo "${pathDeclination}/hooks/config can't be found, skipping..."
+[[ -f ${pathDeclination}/hooks/before_all ]] && ${pathDeclination}/hooks/before_all || echo "${pathDeclination}/hooks/before_all can't be found, skipping..."
+chmod +x ${pathDeclination}/companies/${declination_company}/*
+[[ -f ${pathDeclination}/companies/${declination_company}/config ]] && . ${pathDeclination}/companies/${declination_company}/config || echo "${pathDeclination}/companies/${declination_company}/config can't be found, skipping..."
+[[ -f ${pathDeclination}/companies/${declination_company}/before_all ]] && ${pathDeclination}/companies/${declination_company}/before_all || echo "${pathDeclination}/companies/${declination_company}/before_all can't be found, skipping..."
+
+initial_process_wd=$PWD
+
+# display tools version
+is_release && npx @yeutech/rollup-umd-scripts --version
+
+function wait_for_tag() {
+  tag=v${1#v}
+  interval=${2:-20}
+	while :; do
+		echo "Waiting for tag ${tag}..."
+		git fetch --tags --quiet
+		git rev-parse --verify --quiet "${tag}" && break
+		sleep ${interval}
+	done
+}
+
+export -f wait_for_tag
+
+function git_checkout() {
+  tag=v${1#v}
+	is_release && wait_for_tag "${tag}"
+	git checkout ${tag} || echo "testing"
+	npm install
+}
+
+export -f git_checkout
+
+function remove_rollup() {
+  # remove rollup
+  rm declination.json rollup.config.js
+  npm uninstall --save-dev \
+    rollup \
+    @rollup-umd/rollup
+  sed -i '/"prebuild:dist":/d' package.json
+  sed -i '/"build:dist":/d' package.json
+  sed -i '/"build:dist:dev":/d' package.json
+  sed -i '/"build:dist:watch":/d' package.json
+  sed -i '/"build":/c\\ \ \ \ \"build": "npm run build:lib",' package.json
+  sed -i '/"build:clean":/c\\ \ \ \ \"build:clean": "rimraf lib/*",' package.json
+  sed -i '/"lib",/c\    "lib"\' package.json
+  sed -i '/"dist"/d' package.json
+  sed -i '/"rollup",/d' package.json
+  sed -i '/"jsnext:main": /d' package.json
+  sed -i '/"module": /d' package.json
+  json=$(mktemp); jq 'del(.browserslist)' package.json > "$json"; mv "$json" package.json
+}
+
+export -f remove_rollup
+
+function remove_babel() {
+  remove_rollup
+  rm -f .babelrc babel.config.js babel.ext.json
+  npm uninstall --save-dev \
+    @babel/cli \
+    @babel/core \
+    @babel/node \
+    @babel/plugin-external-helpers \
+    @babel/plugin-proposal-class-properties \
+    @babel/plugin-proposal-decorators \
+    @babel/plugin-proposal-json-strings \
+    @babel/plugin-proposal-object-rest-spread \
+    @babel/plugin-syntax-dynamic-import \
+    @babel/plugin-syntax-import-meta \
+    @babel/plugin-transform-async-to-generator \
+    @babel/plugin-transform-modules-commonjs \
+    @babel/plugin-transform-react-constant-elements \
+    @babel/plugin-transform-react-inline-elements \
+    @babel/plugin-transform-runtime \
+    @babel/preset-env \
+    @babel/preset-react \
+    babel-core \
+    babel-eslint \
+    babel-jest \
+    babel-loader \
+    babel-merge \
+    babel-plugin-dynamic-import-node \
+    babel-plugin-react-transform \
+    babel-plugin-transform-react-remove-prop-types \
+    exports-loader
+  npm uninstall --save \
+    @babel/runtime
+  sed -i '/"prebuild":/d' package.json
+  sed -i '/"build":/c\\ \ \ \ \"build": "true",' package.json
+  sed -i '/"prebuild:lib":/d' package.json
+  sed -i '/"build:lib":/d' package.json
+  sed -i '/"build:lib:watch":/d' package.json
+  sed -i '/"build:clean":/d' package.json
+  jq 'del(.main)' package.json > package.tmp.json$$
+  mv package.tmp.json$$ package.json
+  rm -rf src/*
+}
+
+export -f remove_babel
+
+function remove_lint() {
+  npm uninstall --save-dev \
+    eslint \
+    eslint-config-airbnb-base \
+    eslint-plugin-import \
+    lint-staged
+  sed -i '/"lint":/d' package.json
+  jq 'del(.eslintConfig) | del(."lint-staged")' package.json > package.tmp.json$$
+  mv package.tmp.json$$ package.json
+  jq 'del(."pre-commit"[] | select(. == "lint-staged"))' package.json > package.tmp.json$$
+  mv package.tmp.json$$ package.json
+}
+
+export -f remove_lint
+
+function remove_test() {
+  npm uninstall --save-dev \
+    jest-cli \
+    jest-sonar-reporter \
+    istanbul-api \
+    istanbul-reports \
+    sinon
+  jq "del(.jest)" package.json > package.tmp.json$$
+  mv package.tmp.json$$ package.json
+  jq '.scripts.test = "true" | del(.scripts["test:web"]) | del(.scripts["test:clean"]) | del(.scripts["test:watch"])' package.json > package.tmp.json$$
+  mv package.tmp.json$$ package.json
+}
+
+export -f remove_test
+
+function remove_js() {
+  remove_babel
+  remove_lint
+  remove_test
+  rm -rf src
+}
+
+export -f remove_js
+
+
+for i in $(seq ${from} ${to}); do
+	[[ $(echo ${#i}) = 1 ]] && i=0${i}
+	for file in ${pathDeclination}/${i}-*; do
+		if [[ -f "${file}" ]]; then
+      baseName=$(basename "$file")
+      declination=${baseName#*-}
+      target_name=rollup-${declination}
+      target_dir=${initial_process_wd}/$$
+      mkdir -p ${target_dir}
+      cd ${target_dir}
+      # only in CI master we clone
+      if is_release; then
+        # Foreach declination clone
+        git clone "${rollup_git_url/#ssh:/git+ssh:}" "${target_name}" || echo "${target_name} already cloned";
+        cd ${target_dir}/${target_name}
+      fi
+
+      echo "[Release declination] Releasing ${PACKAGE_VERSION}-${declination} using script: ${baseName}"
+      [[ -f ${pathDeclination}/hooks/before_each ]] && ${pathDeclination}/hooks/before_each || echo "${pathDeclination}/hooks/before_each can't be found, skipping..."
+      [[ -f ${pathDeclination}/companies/${declination_company}/before_each ]] && ${pathDeclination}/companies/${declination_company}/before_each || echo "${pathDeclination}/companies/${declination_company}/before_each can't be found, skipping..."
+
+      # only in CI master we are in cloned directory
+      if is_release; then
+        ${file}
+      fi
+
+      [[ -f ${pathDeclination}/companies/${declination_company}/after_each ]] && ${pathDeclination}/companies/${declination_company}/after_each || echo "${pathDeclination}/companies/${declination_company}/after_each can't be found, skipping..."
+      [[ -f ${pathDeclination}/hooks/after_each ]] && ${pathDeclination}/hooks/after_each || echo "${pathDeclination}/hooks/after_each can't be found, skipping..."
+
+      # build and test
+      if [[ "$(npm -v)" = 5.6.0 ]]; then npm install; fi # fix bug with npm 5.6.0
+      npm run build
+      npm run styleguide:build
+      npm run test
+
+      # if passed in CI do tagging
+      if is_release; then
+        tmpBranch=${PACKAGE_VERSION}-${declination}
+        git checkout -b ${tmpBranch}
+        rm -rf internals/declination
+        git add -A
+        git commit -m "feat(${tmpBranch}): Create declination ${tmpBranch} from rollup-umd ${PACKAGE_VERSION} [skip ci]"
+        git push origin ${tmpBranch} || echo "[Release declination] Already tagged"
+        git tag ${PACKAGE_VERSION}-${declination} || echo "[Release declination] skipping..."
+        git push --tags || echo "[Release declination] skipping..."
+        git reset HEAD --hard
+        git checkout ${DECLINATION_RELEASE_REF_NAME}
+        git branch -D ${tmpBranch} || echo "[Release declination] skipping..."
+        git push --delete origin refs/heads/${tmpBranch} || echo "[Release declination] skipping..."
+        cd ${initial_process_wd}
+      fi
+		fi
+	done
+done
+
+echo "[Release declination] from ${from} to ${to}: success"

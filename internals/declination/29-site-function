@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -e
+git_checkout ${PACKAGE_VERSION}-site-service
+# start
+
+cat > src/index.js << EOL
+import { SiteFunction, SiteService } from '@kopaxgroup-api/site-service';
+/* You must run once \`npm run role\` to get this file, then uncomment */
+// import sfRoles from './roles.json';
+
+export const umSamplesSiteFunction = new SiteFunction(1337, new SiteService(1337), {
+//  roles: sfRoles,
+});
+
+/**
+ * @public
+ * @description User management - samples site function
+ * @type {SiteFunction} - the samples site function
+ * @example
+ * import umSamplesSiteFunction from '@kopaxgroup-api/um-samples';
+ */
+export default umSamplesSiteFunction;
+EOL
+
+cat > src/tests/index.test.js << EOL
+import { SiteFunction } from '@kopaxgroup-api/site-service';
+import umSamplesSiteFunction from '../index';
+
+describe('umSamplesSiteFunction', () => {
+  it('should be a SiteFunction', () => {
+    expect(umSamplesSiteFunction instanceof SiteFunction).toBe(true);
+  });
+  it('should have id 1337', () => {
+    expect(umSamplesSiteFunction.id).toBe(1337);
+  });
+});
+EOL

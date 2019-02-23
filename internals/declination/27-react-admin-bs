@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -e
+git_checkout ${PACKAGE_VERSION}-react-admin
+# start
+
+npx @yeutech/rollup-umd-scripts peer add "@bootstrap-styled/ra-ui*BsRaUi" --singleton
+

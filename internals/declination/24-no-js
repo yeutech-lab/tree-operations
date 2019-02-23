@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+git_checkout ${PACKAGE_VERSION}
+# start
+remove_js

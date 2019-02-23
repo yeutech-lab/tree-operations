@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+git_checkout ${PACKAGE_VERSION}
+# start
+sed -i '/"homepage"/a\  "engines": {\n\    "node": ">=8"\n\  },' package.json

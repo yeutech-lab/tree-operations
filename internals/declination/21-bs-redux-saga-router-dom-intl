@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -e
+git_checkout ${PACKAGE_VERSION}-bs-redux-saga-router-dom
+# start
+npm install --save-dev babel-plugin-react-intl
+npm install --save-dev @rollup-umd/intl
+npx @yeutech/rollup-umd-scripts peer add react-intl
+npx @rollup-umd/intl intl install en --default=en
+
+[[ -f "internals/templates/docs/commands.md" ]] && cat <<EOT >> internals/templates/docs/commands.md
+
+Extract internationalization messages
+
+\`\`\`bash
+$ npm run extract-intl
+\`\`\`
+
+EOT
+
+cat > src/messages.js << EOL
+import { defineMessages } from 'react-intl';
+
+export default defineMessages({
+  test: {
+    id: 'dev-tools.rollup-umd.test',
+    defaultMessage: 'This is a dummy test string.',
+  },
+});
+EOL
+cat > src/tests/messages.test.js << EOL
+/* eslint-disable function-paren-newline */
+import React from 'react';
+import { createStore } from 'redux';
+import Provider from 'react-redux/lib/components/Provider';
+import { FormattedMessage, IntlProvider } from 'react-intl';
+import { shallow } from 'enzyme';
+import messages from '../messages';
+
+import pkg from '../../package.json';
+
+describe('messages', () => {
+  let store;
+  const translateMessage = {};
+  beforeAll(() => {
+    store = createStore(
+      (state) => state,
+      { locale: 'en' },
+    );
+  });
+
+  it('should render the default language messages', () => {
+    const renderedComponent = shallow(
+      <Provider store={store}>
+        <IntlProvider locale="en" messages={translateMessage}>
+          <FormattedMessage {...messages.test} />
+        </IntlProvider>
+      </Provider>
+    );
+    expect(renderedComponent.find('FormattedMessage').props().id).toBe('dev-tools.rollup-umd.test');
+  });
+
+  it(\`should have a \${pkg.translation.locale}.json file\`, () => {
+    const json = require(\`../../translation/\${pkg.translation.locale}.json\`); // eslint-disable-line global-require
+    expect(typeof json === 'object').toBe(true);
+  });
+
+  pkg.translation.locales.forEach((locale) => {
+    it(\`should have a \${locale}.json file\`, () => {
+      const json = require(\`../../translation/\${locale}.json\`); // eslint-disable-line global-require
+      expect(typeof json === 'object').toBe(true);
+    });
+  });
+});
+EOL
+npx @rollup-umd/intl intl extract
+
+cat > styleguide/components/Wrapper.js << EOL
+import React from 'react';
+import { combineReducers } from 'redux';
+import Wrapper from '@rollup-umd/documentation/lib/Wrapper';
+import reducer from '../../src/components/reducer';
+import messages from '../../src/messages';
+
+/* eslint-disable global-require */
+export default (props) => (
+  <Wrapper
+    redux={require('redux')}
+    react-redux={require('react-redux')}
+    reducer={combineReducers({
+      'bs.demo': reducer,
+      locale: () => 'en',
+    })}
+    react-intl={require('react-intl')}
+    messages={messages.en}
+    {...props}
+  />
+);
+EOL

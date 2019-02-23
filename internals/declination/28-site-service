@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -e
+git_checkout ${PACKAGE_VERSION}-react-admin-bs
+# start
+
+npx @yeutech/rollup-umd-scripts peer add "@kopaxgroup-api/cli"
+npx @yeutech/rollup-umd-scripts peer add "@kopaxgroup-api/site-service*SiteServiceCollection" --singleton
+npx @yeutech/rollup-umd-scripts peer add "@bootstrap-styled/ra-ui*BsRaUi" --singleton
+npx @yeutech/rollup-umd-scripts peer add "@yeutech/app-context*AppContext" --singleton
+npx @yeutech/rollup-umd-scripts peer add @yeutech-lab/react-router-dom-utils --singleton
+npx @yeutech/rollup-umd-scripts peer add @yeutech/react-loadable --singleton
+npx @yeutech/rollup-umd-scripts peer add @kopaxgroup-api/link --singleton
+
+cat > src/index.js << EOL
+import { SiteService } from '@kopaxgroup-api/site-service';
+/* You must run once \`npm run role\` to get this file, then uncomment */
+// import sSroles from './roles.json';
+
+/**
+ * @public
+ * @description
+ * This site service provide users related base feature
+ * To use it within your application, read [\`@kopaxgroup-api/site-service\` documentation](https://kopaxgroup-api.yeutech.com/site-service)
+ * @example
+ * import sampleSiteService from '@kopaxgroup-api/sample-management';
+ */
+const sampleSiteService = new SiteService(1337, {
+//  roles: sSroles,
+});
+
+export default sampleSiteService;
+EOL
+
+cat > src/tests/index.test.js << EOL
+import { SiteService } from '@kopaxgroup-api/site-service';
+import sampleSiteService from '../index';
+
+describe('sampleSiteService', () => {
+  it('should be a SiteService', () => {
+    expect(sampleSiteService instanceof SiteService).toBe(true);
+  });
+  it('should have id 1337', () => {
+    expect(sampleSiteService.id).toBe(1337);
+  });
+});
+EOL
+
+jq '.scripts."prerole" = "npm run build"' package.json > package.json$$
+mv package.json$$ package.json
+
+jq '.scripts.role = "npx @kopaxgroup-api/cli role"' package.json > package.json$$
+mv package.json$$ package.json

@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+set -e
+git_checkout ${PACKAGE_VERSION}-node
+# start
+
+# prepare cli
+echo /docs/cli >> .gitignore
+sed -i '/"main"/a\  "bin": "lib/cli/index.js",' package.json
+
+# install deps
+npm install --save \
+  yargs \
+  execa \
+  debug
+
+npm install --save-dev \
+  @babel/node
+
+# create sample
+mkdir -p src/tests
+mkdir -p src/cli/tests
+mkdir -p src/cli/cmds/tests
+
+cat package.json | jq '.jest.collectCoverageFrom += ["!src/cli/index.{js,jsx}"]' > package.json$$
+mv package.json$$ package.json
+
+cat > src/cli/index.js << EOL
+#!/usr/bin/env node
+// eslint-disable-next-line no-unused-expressions
+require('yargs').commandDir('cmds')
+  .demandCommand()
+  .help()
+  .wrap(100)
+  .epilog('Copyright $DECLINATION_YEAR. $COMPANY_FULLNAME.')
+  .argv;
+EOL
+
+
+cat > src/cli/tests/index.test.js << EOL
+import path from 'path';
+import execa from 'execa';
+
+describe('CLI', () => {
+  it('CLI should show help', async () => {
+    const { stdout: help } = await execa.shell(\`node_modules/.bin/babel-node \${path.join(__dirname, '../index')} --help\`);
+    expect(help).toContain('--version');
+  });
+});
+EOL
+
+cat > src/cli/cmds/math.js << EOL
+const debug = require('debug')('math');
+exports.builder = (yargs) => yargs
+  .option('sign', {
+    describe: 'Choose a math sign',
+    default: '+',
+    choices: ['+', '-'],
+  });
+exports.command = 'math <a> <b>';
+exports.desc = 'Discover rollup-umd CLI declination by doing math!';
+exports.handler = (argv) => {
+  const { a, b } = argv;
+  let res;
+  // eslint-disable-next-line default-case
+  switch (argv.sign) {
+    case '+':
+      res = a + b;
+      break;
+    case '-':
+      res = a - b;
+      break;
+  }
+  debug(res);
+  return res;
+};
+EOL
+
+cat > src/cli/cmds/tests/math.test.js << EOL
+import {
+  builder,
+  command,
+  desc,
+  handler,
+} from '../math';
+
+describe('math example', () => {
+  it('builder should be defined', () => {
+    expect(builder).toBeDefined();
+  });
+  it('command should be defined', () => {
+    expect(command).toBeDefined();
+  });
+  it('desc should be defined', () => {
+    expect(desc).toBeDefined();
+  });
+  it('handler should be defined', () => {
+    expect(handler).toBeDefined();
+  });
+  it('builder should be called with', () => {
+    const yargs = {
+      option: jest.fn(),
+    };
+    builder(yargs);
+    expect(yargs.option).toHaveBeenCalledWith('sign', {
+      choices: ['+', '-'],
+      default: '+',
+      describe: 'Choose a math sign',
+    });
+  });
+  it('3 + 5 should be 8', () => {
+    expect(handler({ sign: '+', a: 3, b: 5 })).toEqual(8);
+  });
+  it('3 - 5 should be -2', () => {
+    expect(handler({ sign: '-', a: 3, b: 5 })).toEqual(-2);
+  });
+});
+EOL
