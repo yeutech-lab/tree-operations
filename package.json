@@ -52,7 +52,7 @@
     "tree",
     "operations"
   ],
-  "license": "UNLICENSED",
+  "license": "MIT",
   "eslintConfig": {
     "parser": "babel-eslint",
     "extends": "airbnb-base",
@@ -202,14 +202,14 @@
   },
   "peerDependencies": {},
   "publishConfig": {
-    "tag": "latest",
-    "registry": "https://npm.kopaxgroup.com"
+    "registry": "https://npm.kopaxgroup.com",
+    "tag": "latest"
   },
   "release": {
     "branch": "master",
     "success": false,
     "fail": false,
-    "npmPublish": false,
+    "npmPublish": true,
     "verifyConditions": [
       {
         "path": "@semantic-release/exec",
@@ -294,10 +294,10 @@
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 100,
-        "branches": 100,
+        "statements": 91,
+        "branches": 73,
         "functions": 100,
-        "lines": 100
+        "lines": 95
       }
     },
     "moduleDirectories": [
@@ -311,5 +311,23 @@
     ]
   },
   "contributors": [],
-  "private": true
+  "transitive": {
+    "name": "tree-operations",
+    "scope": "yeutech-lab",
+    "scopedName": "@yeutech-lab/tree-operations",
+    "jsnext:main": "dist/@yeutech-lab/tree-operations.esm.js",
+    "module": "dist/@yeutech-lab/tree-operations.esm.js",
+    "homepage": "https://yeutech-lab.github.io/tree-operations",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/yeutech-lab/tree-operations.git"
+    },
+    "bugs": {
+      "url": "https://github.com/yeutech-lab/tree-operations/issues"
+    },
+    "publishConfig": {
+      "access": "public",
+      "registry": "https://registry.npmjs.org"
+    }
+  }
 }
