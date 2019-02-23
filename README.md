@@ -10,16 +10,24 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=com.github.yeutech-lab.tree-operations&metric=coverage)](https://sonarcloud.io/dashboard?id=com.github.yeutech-lab.tree-operations) [![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=com.github.yeutech-lab.tree-operations&metric=alert_status)](https://sonarcloud.io/dashboard?id=com.github.yeutech-lab.tree-operations)
 
 
-Utilities for tree operations
-
+Utilities for tree operations.
 
 ## Table of Contents
 
+  - [Available operations](#available-operations)
   - [Documentation](#documentation)
   - [Contributing](#contributing)
   - [License MIT](#license-mit)
 
 ---
+
+## Available operations
+
+- [fromArray](https://yeutech-lab.github.io/tree-operations#jsdoc): Create a tree from an array of objects
+- [toFlatArray](https://yeutech-lab.github.io/tree-operations#jsdoc): Create a flat list from an tree 
+- [find](https://yeutech-lab.github.io/tree-operations#jsdoc): Find a node in a tree
+- [selectNew](https://yeutech-lab.github.io/tree-operations#jsdoc): Filters the properties of the nodes of the tree
+- [orderBy](https://yeutech-lab.github.io/tree-operations#jsdoc): Order the leaves of the tree respecting the structure of the tree
 
 ## Documentation
 
